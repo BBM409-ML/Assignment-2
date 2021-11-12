@@ -76,16 +76,14 @@ def build_tree(df, tree=None):
 		tree = {}
 		tree[node] = {}
 
-	# We make loop to construct a tree by calling this function recursively.
-	# In this we check if the subset is pure and stops if it is pure.
 	for value in attValue:
 		subtable = get_sub_dataframe(df, node, value)
 		clValue, counts = np.unique(subtable[Class], return_counts=True)
-		if len(counts) == 1:  # Checking purity of subset
+		if len(counts) == 1: #check for purity
 			tree[node][value] = clValue[0]
 			df = data_train[data_train[node] == value].reset_index(drop=True)
 		else:
-			tree[node][value] = build_tree(subtable)  # Calling the function recursively
+			tree[node][value] = build_tree(subtable)
 	return tree
 
 
@@ -107,6 +105,7 @@ def main():
 	data.to_csv("result.csv")
 	kfoldize(data)
 
-data_train = pandas.DataFrame;
+
+data_train = pandas.DataFrame
 data = pd.read_csv('diabetes_data_upload.csv')
 main()
