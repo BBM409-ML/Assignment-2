@@ -1,9 +1,12 @@
+import heapq
+import random
+
 import pandas
 from math import log
 import numpy as np
 import pandas as pd
 from scipy.linalg.decomp_schur import eps
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, train_test_split
 
 
 def find_total_entropy(dataframe):
@@ -44,6 +47,7 @@ def find_entropy_attribute(dataframe, column):
 		fraction2 = denominator / len(dataframe)
 		# add to total entropy
 		column_total_entropy += -fraction2 * entropy
+		# ENTROPYDE ABS Mİ DÖNÜYORUZ??? !!!
 	return abs(column_total_entropy)
 
 
@@ -113,7 +117,6 @@ def evaluate(tree, test_data, label):
 	correct_prediction = 0
 	incorrect_prediction = 0
 	for index, row in test_data.iterrows():  # for each row in the dataset
-		#print(test_data.iloc[index])
 		result = predict(tree, test_data.iloc[index])  # predict the row
 		if result == test_data[label].iloc[index]:  # predicted value and expected value is same or not
 			correct_prediction += 1  # increase correct count
@@ -131,24 +134,60 @@ def k_fold_cross_validation(data):
 	kf.split(data)
 	# loop over 5 different test & training data, call function
 	for train_index, test_index in kf.split(data):
-		data_train, data_test = data.iloc[train_index].reset_index(drop=True), data.iloc[test_index].reset_index(drop=True)
+		data_train, data_test = data.iloc[train_index].reset_index(drop=True),\
+								data.iloc[test_index].reset_index(drop=True)
+
 		print("############################################################")
 		print()
 		data_train_2 = data_train
-		data_train.to_csv("result.csv")
+		# data_train.to_csv("result.csv")
 		# build tree
 		tree = build_tree(data_train)
-		#visualize(tree)
+		prune(tree)
+		visualize(tree)
 		accuracy = evaluate(tree, data_test, "Class")
 		print(accuracy)
-
 		print()
 		print("############################################################")
 
-	# print("----------------------------------------")
-	# print(data_test)
-	# print(data_train)
-	# print("----------------------------------------")
+		# print("----------------------------------------")
+		# print(data_test)
+		# print(data_train)
+		# print("----------------------------------------")
+
+
+def train_validation_test_splitter(dataframe):
+	train, test = train_test_split(dataframe, test_size=0.2, shuffle=True)
+	train, validation = train_test_split(train, test_size=0.25)
+
+	return train, test, validation
+
+
+def is_leaf(tree):
+	if isinstance(tree, dict):
+		return False
+	return True
+
+
+def is_twig(node):
+	for child in node.keys():
+		if is_leaf(node[child]) is False:
+			return False
+	return True
+
+
+def prune(tree):
+	twigs = {}
+	root_node = next(iter(tree))
+
+	if is_twig(tree[root_node]):
+		print("here")
+		twigs[random.randint(1, 500)] = tree[root_node]  # add info gain
+		print(twigs)
+	else:
+		for value in tree[root_node].keys():  # checking the feature value in current tree node
+			return prune(tree[root_node][value])  # goto next feature
+
 
 
 def main():
@@ -160,6 +199,7 @@ def main():
 	# drop unnecessary column
 	data = data.drop(columns="age_discrete")
 	k_fold_cross_validation(data)
+	# train_validation_test_splitter(data)
 
 
 data_train_2 = pandas.DataFrame
