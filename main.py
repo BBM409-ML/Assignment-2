@@ -242,15 +242,24 @@ def prune(data):
 	tree = build_tree(train)
 	last_accuracy = evaluate(tree, test.reset_index(drop=True), "Class")
 	print(last_accuracy)
-	twigs = find_twigs(tree, [])
-	node_num = find_least_info_gain_twig(twigs)
-	tree = delete_children(tree, node_num)
-	current_accuracy = evaluate(tree, validation.reset_index(drop=True), "Class")
-	print(current_accuracy)
+	last_accuracy = evaluate(tree, test.reset_index(drop=True), "Class")
+	pruned_tree, new_accuracy = repeat_prune(tree, validation, last_accuracy)
+	print(new_accuracy)
 	print()
 	print("-------------------------------------------------------")
 	print()
-	visualize(tree)
+
+
+def repeat_prune(tree, validation, last_accuracy):
+	twigs = find_twigs(tree, [])
+	node_num = find_least_info_gain_twig(twigs)
+	updated_tree = delete_children(tree, node_num)
+	current_accuracy = evaluate(updated_tree, validation.reset_index(drop=True), "Class")
+
+	if current_accuracy <= last_accuracy:
+		return tree, last_accuracy
+	else:
+		return repeat_prune(updated_tree, validation, current_accuracy)
 
 
 def main():
@@ -261,11 +270,8 @@ def main():
 	data['Age'] = data['age_discrete']
 	# drop unnecessary column
 	data = data.drop(columns="age_discrete")
-	#k_fold_cross_validation(data)
+	# k_fold_cross_validation(data)
 	prune(data)
-
-
-# train_validation_test_splitter(data)
 
 
 count = 0
