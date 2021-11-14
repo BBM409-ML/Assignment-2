@@ -143,7 +143,7 @@ def k_fold_cross_validation(data):
 		count = 0
 		data_train_2 = data_train
 		tree = build_tree(data_train)
-		# visualize(tree)
+		#visualize(tree)
 		accuracy = evaluate(tree, data_test, "Class")
 		print(accuracy)
 
@@ -242,7 +242,7 @@ def prune(data):
 	tree = build_tree(train)
 	last_accuracy = evaluate(tree, test.reset_index(drop=True), "Class")
 	print(last_accuracy)
-	last_accuracy = evaluate(tree, test.reset_index(drop=True), "Class")
+	#visualize(tree)
 	pruned_tree, new_accuracy = repeat_prune(tree, validation, last_accuracy)
 	print(new_accuracy)
 	print()
@@ -250,6 +250,7 @@ def prune(data):
 	print()
 
 
+# LAS ACCURACY DEĞİŞECEK Mİ?
 def repeat_prune(tree, validation, last_accuracy):
 	twigs = find_twigs(tree, [])
 	node_num = find_least_info_gain_twig(twigs)
@@ -270,7 +271,7 @@ def main():
 	data['Age'] = data['age_discrete']
 	# drop unnecessary column
 	data = data.drop(columns="age_discrete")
-	# k_fold_cross_validation(data)
+	k_fold_cross_validation(data)
 	prune(data)
 
 
