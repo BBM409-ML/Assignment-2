@@ -1,4 +1,4 @@
-import heapq
+import pprint
 import random
 
 import pandas
@@ -47,7 +47,7 @@ def find_entropy_attribute(dataframe, column):
 		fraction2 = denominator / len(dataframe)
 		# add to total entropy
 		column_total_entropy += -fraction2 * entropy
-		# ENTROPYDE ABS Mİ DÖNÜYORUZ??? !!!
+	# ENTROPYDE ABS Mİ DÖNÜYORUZ??? !!!
 	return abs(column_total_entropy)
 
 
@@ -80,7 +80,6 @@ def build_tree(df, tree=None):
 
 	for value in distinct_values:
 		sub_data_frame = get_sub_dataframe(df, node, value)
-		# BURADAN EMİN DEĞİLİM!! DATAFRAME BOŞ GELİNCE NE YAPILACAK?
 		if sub_data_frame.empty:
 			continue
 		clValue, counts = np.unique(sub_data_frame[Class], return_counts=True)
@@ -128,32 +127,29 @@ def evaluate(tree, test_data, label):
 
 def k_fold_cross_validation(data):
 	global data_train_2
+	global count
 	# define sklearn KFold
 	kf = KFold(n_splits=5, shuffle=True)
 	# split data frame to 5
 	kf.split(data)
 	# loop over 5 different test & training data, call function
 	for train_index, test_index in kf.split(data):
-		data_train, data_test = data.iloc[train_index].reset_index(drop=True),\
+		data_train, data_test = data.iloc[train_index].reset_index(drop=True), \
 								data.iloc[test_index].reset_index(drop=True)
-
 		print("############################################################")
 		print()
+		count = 0
 		data_train_2 = data_train
-		# data_train.to_csv("result.csv")
-		# build tree
 		tree = build_tree(data_train)
-		prune(tree)
+		print(tree)
+		numerated_tree = enumerate_nodes(tree, {})
+		pprint.pprint(numerated_tree)
+		print(prune(tree, {}, numerated_tree))
 		visualize(tree)
 		accuracy = evaluate(tree, data_test, "Class")
 		print(accuracy)
 		print()
 		print("############################################################")
-
-		# print("----------------------------------------")
-		# print(data_test)
-		# print(data_train)
-		# print("----------------------------------------")
 
 
 def train_validation_test_splitter(dataframe):
@@ -176,18 +172,32 @@ def is_twig(node):
 	return True
 
 
-def prune(tree):
-	twigs = {}
+def prune(tree, twigs, numerated_tree):
 	root_node = next(iter(tree))
 
 	if is_twig(tree[root_node]):
-		print("here")
 		twigs[random.randint(1, 500)] = tree[root_node]  # add info gain
-		print(twigs)
 	else:
 		for value in tree[root_node].keys():  # checking the feature value in current tree node
-			return prune(tree[root_node][value])  # goto next feature
+			if is_leaf(tree[root_node][value]):
+				continue
+			prune(tree[root_node][value], twigs, numerated_tree)  # goto next feature
 
+	return twigs
+
+
+def enumerate_nodes(tree, enumerated):
+	global count
+	root_node = next(iter(tree))
+
+	for value in tree[root_node].keys():
+		enumerated[count] = tree[root_node][value]
+		count += 1
+		if is_leaf(tree[root_node][value]):
+			continue
+		enumerate_nodes(tree[root_node][value], enumerated)
+
+	return enumerated
 
 
 def main():
@@ -202,5 +212,6 @@ def main():
 	# train_validation_test_splitter(data)
 
 
+count = 0
 data_train_2 = pandas.DataFrame
 main()
